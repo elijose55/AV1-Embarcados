@@ -44,6 +44,10 @@ volatile Bool f_rtt_alarme = false;
 
 volatile int but_flag = 0;
 
+volatile int hora = 0;
+volatile int minuto = 0;
+volatile int segundo = 0;
+
 /************************************************************************/
 /* handler / callbacks                                                  */
 /************************************************************************/
@@ -98,7 +102,7 @@ void RTC_Handler(void)
 		rtc_clear_status(RTC, RTC_SCCR_SECCLR);
 		
 		
-		rtc_get_time(ID_RTC);
+		rtc_get_time(ID_RTC, &hora, &minuto, &segundo);
 	}
 	
 	rtc_clear_status(RTC, RTC_SCCR_ACKCLR);
@@ -222,9 +226,6 @@ double calcula_distancia(int n){
 
 //rtc
 
-/**
-* Configura o RTC para funcionar com interrupcao de alarme
-*/
 void RTC_init(){
 	/* Configura o PMC */
 	pmc_enable_periph_clk(ID_RTC);
@@ -243,7 +244,7 @@ void RTC_init(){
 	NVIC_EnableIRQ(RTC_IRQn);
 
 	/* Ativa interrupcao via alarme */
-	rtc_enable_interrupt(RTC, RTC_IER_ALREN);
+	rtc_enable_interrupt(RTC, RTC_IER_SECEN);
 
 }
 
@@ -270,32 +271,42 @@ int main(void) {
 	/** Configura RTC */
 	RTC_init();
 	
-	/* configura alarme do RTC */
-	rtc_set_date_alarm(RTC, 1, MOUNTH, 1, DAY);
-	rtc_set_time_alarm(RTC, 1, HOUR, 1, MINUTE, 1, SECOND+1);
-	
 	io_init();
 	int x = 0;
 	int y = 0;
 	int velocidade = 0;
 	int distancia = 0;
+	//int hora;
+	//int minuto;
+	//int segundo;
 	char buffer[32];
 	char buffer_vel[32];
 	char buffer_dis[32];
+	char buffer_hora[32];
+	char buffer_minuto[32];
+	char buffer_segundo[32];
 	sprintf(buffer, "%d", x);
 	sprintf(buffer_vel, "%02d", velocidade);
 	sprintf(buffer_dis, "%02d", distancia);
+	sprintf(buffer_hora, "%02d", hora);
+	sprintf(buffer_minuto, "%02d", minuto);
+	sprintf(buffer_segundo, "%02d", segundo);
 	
 	//font_draw_text(&sourcecodepro_28, "hello", 50, 50, 1);
 
 	while(1) {
 		sprintf(buffer, "%02d", x);
+		sprintf(buffer_hora, "%02d", hora);
+		sprintf(buffer_minuto, "%02d", minuto);
+		sprintf(buffer_segundo, "%02d", segundo);
 		//sprintf(buffer_vel, "%d", velocidade);
 		font_draw_text(&calibri_36, buffer, 50, 20, 1);
 		font_draw_text(&calibri_36, "Velocidade (m/s):", 50, 60, 1);
 		font_draw_text(&arial_72, buffer_vel, 50, 110, 2);
 		font_draw_text(&calibri_36, "Distancia (m):", 50, 190, 1);
 		font_draw_text(&arial_72, buffer_dis, 50, 240, 2);
+		font_draw_text(&calibri_36, "Tempo:", 50, 310, 1);
+		font_draw_text(&arial_72, buffer_dis, 50, 380, 2);
 		if(but_flag){
 
 			x++;	
