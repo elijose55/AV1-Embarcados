@@ -174,7 +174,15 @@ void font_draw_text(tFont *font, const char *text, int x, int y, int spacing) {
 	}	
 }
 
-int calcula_velocidade(int x, )
+int calcula_velocidade(int n){
+	int velocidade = 2*3.14*n/4;
+	return velocidade;
+}
+
+int calcula_distancia(int n){
+	int distancia = 2*3.14*0.325*n;
+	return distancia;
+}
 
 /************************************************************************/
 /* Main                                                                 */
@@ -190,24 +198,46 @@ int main(void) {
 	WDT->WDT_MR = WDT_MR_WDDIS;
 	
 	// configura botao com interrupcao
+	
+	// Inicializa RTT com IRQ no alarme.
+	f_rtt_alarme = true;
+	
+	
 	io_init();
 	int x = 0;
 	int y = 0;
+	int velocidade = 0;
+	int distancia = 0;
 	char buffer[32];
+	char buffer_vel[32];
+	char buffer_dis[32];
 	sprintf(buffer, "%d", x);
+	sprintf(buffer_vel, "%d", velocidade);
+	sprintf(buffer_dis, "%d", distancia);
 	
 	//font_draw_text(&sourcecodepro_28, "hello", 50, 50, 1);
 
 	while(1) {
-		font_draw_text(&calibri_36, buffer, 50, 100, 1);
-		font_draw_text(&arial_72, "102456", 50, 200, 2);
+		sprintf(buffer, "%d", x);
+		//sprintf(buffer_vel, "%d", velocidade);
+		font_draw_text(&calibri_36, buffer, 50, 20, 1);
+		font_draw_text(&calibri_36, "Velocidade (m/s):", 50, 60, 1);
+		font_draw_text(&arial_72, buffer_vel, 50, 110, 2);
+		font_draw_text(&calibri_36, "Distancia (m):", 50, 190, 1);
+		font_draw_text(&arial_72, buffer_dis, 50, 240, 2);
 		if(but_flag){
-			sprintf(buffer, "%d", x);
+
 			x++;	
+			y++;
 			but_flag = 0;
 		}
 		
 		if (f_rtt_alarme){
+			velocidade = calcula_velocidade(x);
+			distancia = calcula_distancia(y);
+			x = 0;
+			sprintf(buffer_vel, "%d", velocidade);
+			sprintf(buffer_dis, "%d", distancia);
       
 		  /*
 		   * O clock base do RTT é 32678Hz
@@ -234,7 +264,7 @@ int main(void) {
 		  // reinicia RTT para gerar um novo IRQ
 		  RTT_init(pllPreScale, irqRTTvalue);   
 		  
-		        
+
       
 		 /*
 		  * caso queira ler o valor atual do RTT, basta usar a funcao
