@@ -59,6 +59,9 @@
 // From module: Delay routines
 #include <delay.h>
 
+// From module: AFEC - Analog-Front-End Controller
+#include <afec.h>
+
 // From module: Display - ILI9488 LCD Controller (SPI)
 #include <ili9488.h>
 
@@ -105,5 +108,27 @@
 
 // From module: pio_handler support enabled
 #include <pio_handler.h>
+
+// From module: EEFC - Enhanced Embedded Flash Controller
+#include <efc.h>
+
+// From module: Flash - SAM Flash Service API
+#include <flash_efc.h>
+
+// From module: RTC - Real Time Clock
+#include <rtc.h>
+
+// From module: RTT - Real Time Timer
+#include <rtt.h>
+
+// From module: SAM SDRAMC Driver
+#include <sdramc.h>
+
+// From module: SDRAMC configuration for IS42S16100E
+#include <is42s16100e.h>
+
+// From module: Sleep manager - SAM implementation
+#include <sam/sleepmgr.h>
+#include <sleepmgr.h>
 
 #endif // ASF_H
