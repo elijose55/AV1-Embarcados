@@ -99,19 +99,19 @@ void io_init(void){
 	
 	// Configura PIO para lidar com o pino do botão como entrada
 	// com pull-up
-	pio_configure(BUT_PIO, PIO_INPUT, BUT_IDX_MASK, PIO_PULLUP);
+	pio_configure(BUT_PIO, PIO_INPUT, BUT_PIO_IDX_MASK, PIO_PULLUP);
 	
 	// Configura interrupção no pino referente ao botao e associa
 	// função de callback caso uma interrupção for gerada
 	// a função de callback é a: but_callback()
 	pio_handler_set(BUT_PIO,
 	BUT_PIO_ID,
-	BUT_IDX_MASK,
+	BUT_PIO_IDX_MASK,
 	PIO_IT_RISE_EDGE,
 	but_callback);	
   
 	// Ativa interrupção
-	pio_enable_interrupt(BUT_PIO, BUT_IDX_MASK);
+	pio_enable_interrupt(BUT_PIO, BUT_PIO_IDX_MASK);
 
 	// Configura NVIC para receber interrupcoes do PIO do botao
 	// com prioridade 4 (quanto mais próximo de 0 maior)
@@ -189,19 +189,38 @@ int main(void) {
 	
 	// configura botao com interrupcao
 	io_init();
-	int x  = 3032;
+	int x  = 0;
 	char buffer[32];
 	sprintf(buffer, "%d", x);
 	
-	font_draw_text(&sourcecodepro_28, buffer, 50, 50, 1);
-	font_draw_text(&calibri_36, "Oi Mundo! #$!@", 50, 100, 1);
-	font_draw_text(&arial_72, "102456", 50, 200, 2);
+	//font_draw_text(&sourcecodepro_28, "hello", 50, 50, 1);
+
 	while(1) {
+		font_draw_text(&calibri_36, buffer, 50, 100, 1);
+		font_draw_text(&arial_72, "102456", 50, 200, 2);
+		if(but_flag){
+			sprintf(buffer, "%d", x);
+			x++;	
+			but_flag = 0;
+		}
 		
-		//if(but_flag){
-		//	
-		//	but_flag = 0;
-		//}
+		if (f_rtt_alarme){
+		  uint16_t pllPreScale = (int) (((float) 32768) / 2.0);
+		  uint32_t irqRTTvalue  = 4;
+      
+		  // reinicia RTT para gerar um novo IRQ
+		  RTT_init(pllPreScale, irqRTTvalue);         
+      
+		 /*
+		  * caso queira ler o valor atual do RTT, basta usar a funcao
+		  *   rtt_read_timer_value()
+		  */
+      
+		  /*
+		   * CLEAR FLAG
+		   */
+		  f_rtt_alarme = false;
+		}
 		
 		
 	}
