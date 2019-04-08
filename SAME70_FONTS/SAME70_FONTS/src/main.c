@@ -174,6 +174,8 @@ void font_draw_text(tFont *font, const char *text, int x, int y, int spacing) {
 	}	
 }
 
+int calcula_velocidade(int x, )
+
 /************************************************************************/
 /* Main                                                                 */
 /************************************************************************/
@@ -189,7 +191,8 @@ int main(void) {
 	
 	// configura botao com interrupcao
 	io_init();
-	int x  = 0;
+	int x = 0;
+	int y = 0;
 	char buffer[32];
 	sprintf(buffer, "%d", x);
 	
@@ -205,11 +208,33 @@ int main(void) {
 		}
 		
 		if (f_rtt_alarme){
+      
+		  /*
+		   * O clock base do RTT é 32678Hz
+		   * Para gerar outra base de tempo é necessário
+		   * usar o PLL pre scale, que divide o clock base.
+		   *
+		   * Nesse exemplo, estamos operando com um clock base
+		   * de pllPreScale = 32768/32768/2 = 2Hz
+		   *
+		   * Quanto maior a frequência maior a resolução, porém
+		   * menor o tempo máximo que conseguimos contar.
+		   *
+		   * Podemos configurar uma IRQ para acontecer quando 
+		   * o contador do RTT atingir um determinado valor
+		   * aqui usamos o irqRTTvalue para isso.
+		   * 
+		   * Nesse exemplo o irqRTTvalue = 8, causando uma
+		   * interrupção a cada 2 segundos (lembre que usamos o 
+		   * pllPreScale, cada incremento do RTT leva 500ms (2Hz).
+		   */
 		  uint16_t pllPreScale = (int) (((float) 32768) / 2.0);
 		  uint32_t irqRTTvalue  = 4;
       
 		  // reinicia RTT para gerar um novo IRQ
-		  RTT_init(pllPreScale, irqRTTvalue);         
+		  RTT_init(pllPreScale, irqRTTvalue);   
+		  
+		        
       
 		 /*
 		  * caso queira ler o valor atual do RTT, basta usar a funcao
