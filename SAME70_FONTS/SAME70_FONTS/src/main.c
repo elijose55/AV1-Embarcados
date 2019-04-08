@@ -24,15 +24,6 @@
 #define LED_IDX       8u
 #define LED_IDX_MASK  (1u << LED_IDX)
 
-
-#define YEAR        2018
-#define MOUNTH      3
-#define DAY         19
-#define WEEK        12
-#define HOUR        15
-#define MINUTE      45
-#define SECOND      0
-
 /************************************************************************/
 /* constants                                                            */
 /************************************************************************/
@@ -43,6 +34,10 @@
 volatile Bool f_rtt_alarme = false;
 
 volatile int but_flag = 0;
+
+volatile int horai = 0;
+volatile int minutoi = 0;
+volatile int segundoi = 0;
 
 volatile int hora = 0;
 volatile int minuto = 0;
@@ -216,7 +211,7 @@ void font_draw_text(tFont *font, const char *text, int x, int y, int spacing) {
 
 double calcula_velocidade(int n){
 	double velocidade = 2*3.14*n/4;
-	return velocidade;
+	return velocidade*3.6;
 }
 
 double calcula_distancia(int n){
@@ -233,17 +228,13 @@ void RTC_init(){
 	/* Default RTC configuration, 24-hour mode */
 	rtc_set_hour_mode(RTC, 0);
 
-	/* Configura data e hora manualmente */
-	rtc_set_date(RTC, YEAR, MOUNTH, DAY, WEEK);
-	rtc_set_time(RTC, HOUR, MINUTE, SECOND);
-
 	/* Configure RTC interrupts */
 	NVIC_DisableIRQ(RTC_IRQn);
 	NVIC_ClearPendingIRQ(RTC_IRQn);
 	NVIC_SetPriority(RTC_IRQn, 0);
 	NVIC_EnableIRQ(RTC_IRQn);
 
-	/* Ativa interrupcao via alarme */
+	/* Ativa interrupcao por segundo */
 	rtc_enable_interrupt(RTC, RTC_IER_SECEN);
 
 }
@@ -291,22 +282,26 @@ int main(void) {
 	sprintf(buffer_hora, "%02d", hora);
 	sprintf(buffer_minuto, "%02d", minuto);
 	sprintf(buffer_segundo, "%02d", segundo);
+	rtc_get_time(ID_RTC, &horai, &minutoi, &segundoi);
 	
 	//font_draw_text(&sourcecodepro_28, "hello", 50, 50, 1);
 
 	while(1) {
+		rtc_get_time(ID_RTC, &hora, &minuto, &segundo);
 		sprintf(buffer, "%02d", x);
-		sprintf(buffer_hora, "%02d", hora);
-		sprintf(buffer_minuto, "%02d", minuto);
-		sprintf(buffer_segundo, "%02d", segundo);
+		sprintf(buffer_hora, "%02d", hora-horai);
+		sprintf(buffer_minuto, "%02d", minuto-minutoi);
+		sprintf(buffer_segundo, "%02d", segundo-segundoi);
 		//sprintf(buffer_vel, "%d", velocidade);
-		font_draw_text(&calibri_36, buffer, 50, 20, 1);
-		font_draw_text(&calibri_36, "Velocidade (m/s):", 50, 60, 1);
-		font_draw_text(&arial_72, buffer_vel, 50, 110, 2);
-		font_draw_text(&calibri_36, "Distancia (m):", 50, 190, 1);
-		font_draw_text(&arial_72, buffer_dis, 50, 240, 2);
-		font_draw_text(&calibri_36, "Tempo:", 50, 310, 1);
-		font_draw_text(&arial_72, buffer_dis, 50, 380, 2);
+		font_draw_text(&calibri_36, buffer, 20, 20, 1);
+		font_draw_text(&calibri_36, "Velocidade (Km/h):", 20, 60, 1);
+		font_draw_text(&arial_72, buffer_vel, 20, 110, 2);
+		font_draw_text(&calibri_36, "Distancia (m):", 20, 190, 1);
+		font_draw_text(&arial_72, buffer_dis, 20, 240, 2);
+		font_draw_text(&calibri_36, "Tempo:", 20, 310, 1);
+		font_draw_text(&calibri_36, buffer_hora, 50, 380, 2);
+		font_draw_text(&calibri_36, buffer_minuto, 100, 380, 2);
+		font_draw_text(&calibri_36, buffer_segundo, 150, 380, 2);
 		if(but_flag){
 
 			x++;	
