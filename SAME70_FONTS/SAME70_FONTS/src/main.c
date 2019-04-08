@@ -24,6 +24,15 @@
 #define LED_IDX       8u
 #define LED_IDX_MASK  (1u << LED_IDX)
 
+
+#define YEAR        2018
+#define MOUNTH      3
+#define DAY         19
+#define WEEK        12
+#define HOUR        15
+#define MINUTE      45
+#define SECOND      0
+
 /************************************************************************/
 /* constants                                                            */
 /************************************************************************/
@@ -50,6 +59,7 @@ void but_callback(void)
 void pin_toggle(Pio *pio, uint32_t mask);
 void io_init(void);
 static void RTT_init(uint16_t pllPreScale, uint32_t IrqNPulses);
+void RTC_init(void);
 
 /************************************************************************/
 /* interrupcoes                                                         */
@@ -70,6 +80,32 @@ void RTT_Handler(void)
 		pin_toggle(LED_PIO, LED_IDX_MASK);    // BLINK Led
 		f_rtt_alarme = true;                  // flag RTT alarme
 	}
+}
+
+/**
+* \brief Interrupt handler for the RTC. Refresh the display.
+*/
+void RTC_Handler(void)
+{
+	uint32_t ul_status = rtc_get_status(RTC);
+
+	/*
+	*  Verifica por qual motivo entrou
+	*  na interrupcao, se foi por segundo
+	*  ou Alarm
+	*/
+	if ((ul_status & RTC_SR_SEC) == RTC_SR_SEC) {
+		rtc_clear_status(RTC, RTC_SCCR_SECCLR);
+		
+		
+		rtc_get_time(ID_RTC);
+	}
+	
+	rtc_clear_status(RTC, RTC_SCCR_ACKCLR);
+	rtc_clear_status(RTC, RTC_SCCR_TIMCLR);
+	rtc_clear_status(RTC, RTC_SCCR_CALCLR);
+	rtc_clear_status(RTC, RTC_SCCR_TDERRCLR);
+	
 }
 
 struct ili9488_opt_t g_ili9488_display_opt;
@@ -174,15 +210,44 @@ void font_draw_text(tFont *font, const char *text, int x, int y, int spacing) {
 	}	
 }
 
-int calcula_velocidade(int n){
-	int velocidade = 2*3.14*n/4;
+double calcula_velocidade(int n){
+	double velocidade = 2*3.14*n/4;
 	return velocidade;
 }
 
-int calcula_distancia(int n){
-	int distancia = 2*3.14*0.325*n;
+double calcula_distancia(int n){
+	double distancia = 2*3.14*0.325*n;
 	return distancia;
 }
+
+//rtc
+
+/**
+* Configura o RTC para funcionar com interrupcao de alarme
+*/
+void RTC_init(){
+	/* Configura o PMC */
+	pmc_enable_periph_clk(ID_RTC);
+
+	/* Default RTC configuration, 24-hour mode */
+	rtc_set_hour_mode(RTC, 0);
+
+	/* Configura data e hora manualmente */
+	rtc_set_date(RTC, YEAR, MOUNTH, DAY, WEEK);
+	rtc_set_time(RTC, HOUR, MINUTE, SECOND);
+
+	/* Configure RTC interrupts */
+	NVIC_DisableIRQ(RTC_IRQn);
+	NVIC_ClearPendingIRQ(RTC_IRQn);
+	NVIC_SetPriority(RTC_IRQn, 0);
+	NVIC_EnableIRQ(RTC_IRQn);
+
+	/* Ativa interrupcao via alarme */
+	rtc_enable_interrupt(RTC, RTC_IER_ALREN);
+
+}
+
+
 
 /************************************************************************/
 /* Main                                                                 */
@@ -202,6 +267,12 @@ int main(void) {
 	// Inicializa RTT com IRQ no alarme.
 	f_rtt_alarme = true;
 	
+	/** Configura RTC */
+	RTC_init();
+	
+	/* configura alarme do RTC */
+	rtc_set_date_alarm(RTC, 1, MOUNTH, 1, DAY);
+	rtc_set_time_alarm(RTC, 1, HOUR, 1, MINUTE, 1, SECOND+1);
 	
 	io_init();
 	int x = 0;
@@ -212,13 +283,13 @@ int main(void) {
 	char buffer_vel[32];
 	char buffer_dis[32];
 	sprintf(buffer, "%d", x);
-	sprintf(buffer_vel, "%d", velocidade);
-	sprintf(buffer_dis, "%d", distancia);
+	sprintf(buffer_vel, "%02d", velocidade);
+	sprintf(buffer_dis, "%02d", distancia);
 	
 	//font_draw_text(&sourcecodepro_28, "hello", 50, 50, 1);
 
 	while(1) {
-		sprintf(buffer, "%d", x);
+		sprintf(buffer, "%02d", x);
 		//sprintf(buffer_vel, "%d", velocidade);
 		font_draw_text(&calibri_36, buffer, 50, 20, 1);
 		font_draw_text(&calibri_36, "Velocidade (m/s):", 50, 60, 1);
@@ -236,8 +307,8 @@ int main(void) {
 			velocidade = calcula_velocidade(x);
 			distancia = calcula_distancia(y);
 			x = 0;
-			sprintf(buffer_vel, "%d", velocidade);
-			sprintf(buffer_dis, "%d", distancia);
+			sprintf(buffer_vel, "%02d", velocidade);
+			sprintf(buffer_dis, "%02d", distancia);
       
 		  /*
 		   * O clock base do RTT é 32678Hz
