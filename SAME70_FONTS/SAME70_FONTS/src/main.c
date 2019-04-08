@@ -98,6 +98,7 @@ void RTC_Handler(void)
 		
 		
 		rtc_get_time(ID_RTC, &hora, &minuto, &segundo);
+		rtc_set_time_alarm(ID_RTC, 1, hora, 1, minuto, 1, segundo+1);
 	}
 	
 	rtc_clear_status(RTC, RTC_SCCR_ACKCLR);
@@ -262,21 +263,18 @@ int main(void) {
 	/** Configura RTC */
 	RTC_init();
 	
+	
 	io_init();
+	but_flag = 0;
 	int x = 0;
 	int y = 0;
 	int velocidade = 0;
 	int distancia = 0;
-	//int hora;
-	//int minuto;
-	//int segundo;
-	char buffer[32];
 	char buffer_vel[32];
 	char buffer_dis[32];
 	char buffer_hora[32];
 	char buffer_minuto[32];
 	char buffer_segundo[32];
-	sprintf(buffer, "%d", x);
 	sprintf(buffer_vel, "%02d", velocidade);
 	sprintf(buffer_dis, "%02d", distancia);
 	sprintf(buffer_hora, "%02d", hora);
@@ -288,12 +286,10 @@ int main(void) {
 
 	while(1) {
 		rtc_get_time(ID_RTC, &hora, &minuto, &segundo);
-		sprintf(buffer, "%02d", x);
 		sprintf(buffer_hora, "%02d", hora-horai);
 		sprintf(buffer_minuto, "%02d", minuto-minutoi);
 		sprintf(buffer_segundo, "%02d", segundo-segundoi);
 		//sprintf(buffer_vel, "%d", velocidade);
-		font_draw_text(&calibri_36, buffer, 20, 20, 1);
 		font_draw_text(&calibri_36, "Velocidade (Km/h):", 20, 60, 1);
 		font_draw_text(&arial_72, buffer_vel, 20, 110, 2);
 		font_draw_text(&calibri_36, "Distancia (m):", 20, 190, 1);
@@ -308,6 +304,7 @@ int main(void) {
 			y++;
 			but_flag = 0;
 		}
+		
 		
 		if (f_rtt_alarme){
 			velocidade = calcula_velocidade(x);
